@@ -3,9 +3,34 @@
 		<title>Ball Blast</title>
 
 	<style>
-		canvas{
-			border:	3px solid black;
+		canvas {
+		border: 5px solid white;
+		position: absolute;	
+		left: 320px;
+		
 		}
+	body {
+		margin: 0;
+ 		display: flex;
+  	
+	}
+	ol { 
+		
+		position: absolute;
+		left: 30px;
+		text-align: center;	
+		display: inline;
+		}
+	body{	
+		font-family: 'Luckiest Guy', cursive;
+		color: red;
+		background: black;
+	}
+	.list{
+		font-size: 30px;
+		padding: 10px 0px 0px 10px;
+		color: blue;
+	}
 	</style>
 
 
@@ -13,7 +38,7 @@
 	</head>
 	<body>
 		<canvas id="game">not working</canvas>
-	
+		<ol id="leaderboard"><h1>LEADERBOARD</h1></ol>
 		<script src="script.js"></script>
 	</body>
 

@@ -1,15 +1,24 @@
 let canvas= document.getElementById("game");
 let ctx=canvas.getContext("2d");
 
+
+let bgm = new sound("bgm.mp3");
+bgm.loop=true;
+let gameover= new sound("gameover.mp3");
+gameover.loop=false;
+let shot=new sound("shoot.mp3");
+shot.loop=false;
 canvas.setAttribute('width' , "1500px");
 canvas.setAttribute('height' , "900px");
-
-var cannonX, right, left, players, namebuffer;
+let leaderboard=document.getElementById('leaderboard');
+var cannonX, right, left, players, namebuffer, max_num;
 let bullets,tBullet, balls, flag, score, ballInterval, bulletInterval;
 players=[];
 namebuffer="";
 function ini(){
-	
+	players.sort(function(a,b){ return b.score-a.score });
+	bgm.play();
+	max_num=12;
 	cannonX = canvas.width/2 - 50;	
 	right = false;	
 	left = false;
@@ -31,6 +40,22 @@ function ini(){
 	flag=0;
 
 }
+
+function sound(src) {
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+        this.sound.play();
+    }
+    this.stop = function(){
+        this.sound.pause();
+    }    
+}
+
 
 
 
@@ -62,7 +87,7 @@ function createBullet( x , y){
 		x: x ,
 		y: y, 
 		draw: function(){
-			ctx.fillStyle="#000000";
+			ctx.fillStyle="#FFFFFF";
 			ctx.beginPath();
 			ctx.arc(this.x , this.y , 8 , 0 , 2*Math.PI , true);
 			ctx.fill();
@@ -100,7 +125,7 @@ function createBall(x, y , num , dir){
 
 
 function drawBalls(){
-	let num = parseInt(Math.random()*11 + 1);
+	let num = parseInt(Math.random()*max_num + 1);
 	let f= Math.random();
 	if(f<0.5)
 		balls.push(createBall(-50 , 100 , num, true));	
@@ -119,7 +144,10 @@ function displayScore(){
 	ctx.font="25px serif";
 	ctx.fillStyle='rgb(0,255,0)';
 	ctx.fillText("Score: "+score , 80 , 50);
-	
+	ctx.fillStyle='#ff3300';
+	ctx.fillText("HighScore: "+players[0].score ,canvas.width-150 , 50);
+	if(players[0].score<score)
+		players.sort(function(a,b){ return b.score-a.score });
 }
 
 function draw(){
@@ -165,10 +193,13 @@ function draw(){
 				obj.num-=1;
 				score++;
 				if(score%20===0){
-					tBall=tBall+600;
+					tBall=tBall+400;
 					tBullet=tBullet-1;
 				}
+				if(score%40===0)
+					max_num+=12
 				if(obj.num===0){
+					shot.play();
 					balls.push(createBall(obj.x , obj.y , parseInt(obj.ini/2) , false));
 					balls.push(createBall(obj.x, obj.y, parseInt(obj.ini/2), true));	
 					balls.splice(j,1);
@@ -178,8 +209,10 @@ function draw(){
 	
 	}
 			
-
-	
+	for(i=leaderboard.childElementCount-1; i>=0;i--)
+		if(leaderboard.childNodes[i].score <=score)
+			leaderboard.insertBefore(reqObj.li , leaderboard.childNodes[i]);	
+	reqObj.display(score);
 	displayScore();
 	drawCannon();	
 
@@ -190,25 +223,44 @@ function draw(){
 }
 
 function endgame(){
+	bgm.stop();
+	gameover.play();
 	if(score>pobj.score)
 		pobj.score=score;
 	window.localStorage.setItem('players' , JSON.stringify(players));
 	alert("game over");
 	clearInterval(bulletInterval);
 	clearInterval(ballInterval);
-	Start();
+	namebuffer="";
+	Info();
 }
 
 function createPlayer(nam, scor){
 	return{
 		name: nam, 
 		score: scor,
+		li: document.createElement("li"),
+		add: function(){
+		        	leaderboard.appendChild(this.li);
+				this.li.setAttribute('class' , "list");
+		},
+		display: function(num){
+			this.score = num;
+			this.li.innerHTML = this.name+":     "+this.score;
+			this.li.score=this.score;
+		}
+			 			
 	};
 }
 
+let reqObj;
 
 function Start(){
 	ini();
+	players.forEach(function(obj){
+		if(obj.name===namebuffer)
+			reqObj=obj;
+	});
 	draw();
 }
 
@@ -229,6 +281,7 @@ document.addEventListener('keypress' , function(e){
 	if(code==13){	
 		pobj=createPlayer(namebuffer, 0)	
 		players.push(pobj);
+		pobj.add();
 		Start();
 	}
 	else
@@ -247,5 +300,22 @@ function extract(){
 	players=JSON.parse(window.localStorage.getItem('players'));
 	if(!players)
 		players=[];
+	else{
+		players.sort(function(a,b){ return b.score-a.score });
+		players.forEach(function(obj){
+			displayList(obj.name, obj.score);
+		});
+	}		
 }
+
+function displayList(name, score)
+{
+	let li = document.createElement('li');
+	li.innerHTML =name+":     "+score;
+	leaderboard.appendChild(li);
+        li.setAttribute('class' , "list");
+	li.score=score;
+}
+
+
 	
